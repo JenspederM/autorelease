@@ -39,8 +39,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install tools
         uses: ./.github/actions/asdf-install
       - name: Create bump and changelog
@@ -51,15 +49,7 @@ jobs:
           changelog_increment_filename: body.md
           push: false
       - name: Commit changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          author_name: github-actions[bot]
-          author_email: github-actions[bot]@users.noreply.github.com
-          message: "bump: release v${{ steps.cz.outputs.version }}"
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: release-${{ steps.cz.outputs.version }}
-          committer: github-actions[bot]
-          author: github-actions[bot]@users.noreply.github.com
+        run: |
+          git add .
+          git commit -m "bump: release ${{ steps.cz.outputs.version }}"
+          git tag -a "v${{ steps.cz.outputs.version }}" -m "Release v${{ steps.cz.outputs.version }}"
