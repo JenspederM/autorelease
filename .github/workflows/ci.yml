@@ -23,3 +23,19 @@ jobs:
 
       - name: Run tests
         run: uv run pytest --tb=short -p no:warnings -p no:cacheprovider
+
+  if_merged:
+    if: ${{ github.event.pull_request.merged }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create bump and changelog
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog_increment_filename: body.md
+          push: false
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: release-${{ steps.cz.outputs.version }}
