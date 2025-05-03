@@ -1,0 +1,73 @@
+name: Create Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "The pull request number"
+        required: true
+        default: ""
+      push:
+        description: "Whether to push the changes to the repository"
+        required: false
+        default: "false"
+
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - name: Set Name and Version from pyproject.toml to output
+        id: project
+        shell: bash
+        run: |
+          name=$(grep "^name" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 | tr "-" "_")
+          version=$(grep "^version" pyproject.toml -m 1 | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+          echo "name=$name" >> $GITHUB_OUTPUT
+          echo "old_version=$version" >> $GITHUB_OUTPUT
+          echo "Releasing $name version $version"
+      - name: Create bump and changelog
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog_increment_filename: body.md
+          push: ${{ github.event.inputs.push }}
+      - name: Find Comment
+        if: ${{ github.event.inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          comment-author: "github-actions[bot]"
+      - name: Create bump comment
+        if: ${{ github.event.inputs.pr_number != '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            <!-- GITHUB_ACTIONS_COMMENT -->
+            ## Release PR Created
+
+            The release PR has been created. Please check it out [here](${{ steps.fc.outputs.html_url }}).
+            <!-- GITHUB_ACTIONS_COMMENT -->
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+
+      - name: Create Pull Request
+        if: ${{ github.event.inputs.pr_number == '' && steps.cz.outputs.version != steps.project.outputs.old_version }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ github.token }}
+          branch: release-${{ steps.cz.outputs.version }}
+          committer: github-actions[bot]
+          title: "Release ${{ steps.cz.outputs.version }}"
+          body: |
+            <!-- GITHUB_ACTIONS_COMMENT -->
+            ## Release PR Created
+
+            The release PR has been created. Please check it out [here](${{ steps.fc.outputs.html_url }}).
+            <!-- GITHUB_ACTIONS_COMMENT -->
