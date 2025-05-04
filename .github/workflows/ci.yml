@@ -67,4 +67,3 @@ jobs:
           branch: bump-version
           signoff: true
           sign-commits: true
-          base: ${ github.event.pull_request.base.ref }
