@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
       - name: Install tools
         uses: ./.github/actions/asdf-install
-      - name: Create bump and changelog
+      - name: bump and create changelog
         id: cz
         uses: commitizen-tools/commitizen-action@master
         with:
