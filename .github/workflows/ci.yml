@@ -67,4 +67,6 @@ jobs:
           title: "Bump version to v${{ steps.cz.outputs.version }}"
           body-path: body.md
           branch: bump-version
+          signoff: true
+          sign-commits: true
           base: main
