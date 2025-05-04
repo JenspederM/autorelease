@@ -68,4 +68,3 @@ jobs:
           body-path: body.md
           branch: bump-version
           base: main
-          labels: release
